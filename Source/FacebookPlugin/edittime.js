@@ -3,9 +3,9 @@
 	return {
 		"name":			"Facebook",
 		"id":			"Facebook",
-		"version":		"1.0",
+		"version":		"1.1",
 		"description":	"Access Facebook API features.",
-		"author":		"Scirra",
+		"author":		"Scirra - Updated by Kevin Martinez",
 		"help url":		"http://www.scirra.com/manual/112/facebook",
 		"category":		"Platform specific",
 		"type":			"object",			// not in layout
