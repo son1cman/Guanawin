@@ -51,13 +51,17 @@ cr.plugins_.Facebook = function(runtime)
 	{
 		if (!fbLoggedIn)
 		{
+			//Local
 			fbLoggedIn = true;
+			//Construct 2 Api RunTime
 			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnLogIn, fbInst);
-			
-			FB.api('/me', function(response) {
-							fbFullName = response["name"];
+			//Updated 2.3
+			FB.api('/me?fields=first_name', function(response) {
+							
 							fbFirstName = response["first_name"];
-							fbLastName = response["last_name"];
+							fbFullName = fbFirstName;
+							//fbLastName = response["last_name"];
+							//Construct 2 ApiRun Time
 							fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnNameAvailable, fbInst);
 						});
 		}
@@ -101,12 +105,9 @@ cr.plugins_.Facebook = function(runtime)
 				pname = pname.substr(0, pname.lastIndexOf('/') + 1);
 			
 			FB.init({
-			  "appId"      : fbAppID,
-			  "channelURL" : '//' + location.hostname + pname + 'channel.html',
-			  "status"     : true,
-			  "cookie"     : true,
-			  "oauth"      : true,
-			  "xfbml"      : false
+			  appId      : fbAppID,
+			  xfbml      : true,
+			  version    : 'v2.3'
 			});
 			
 			fbReady = true;
@@ -147,12 +148,14 @@ cr.plugins_.Facebook = function(runtime)
 		// Load the SDK asynchronously.  Don't bother if no App ID provided.
 		if (fbAppID.length)
 		{
-			(function(d){
-				var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
-				js = d.createElement('script'); js.id = id; js.async = true;
-				js.src = "//connect.facebook.net/en_US/all.js";
-				d.getElementsByTagName('head')[0].appendChild(js);
-			}(document));
+			//Updated 2.3
+			(function(d, s, id){
+			    var js, fjs = d.getElementsByTagName(s)[0];
+			    if (d.getElementById(id)) {return;}
+			    js = d.createElement(s); js.id = id;
+			    js.src = "//connect.facebook.net/en_US/sdk.js";
+			    fjs.parentNode.insertBefore(js, fjs);
+			}(document, 'script', 'facebook-jssdk'));
 		}
 		else
 			log("Facebook object: no App ID provided.  Please enter an App ID before using the object.");
@@ -259,11 +262,11 @@ cr.plugins_.Facebook = function(runtime)
 		//if (!fbLoggedIn || fbPerms !== newperms)
 		//{
 			fbPerms = newperms;
-			
+			//Updated 2.3
 			FB.login(function(response) {
-					if (response["authResponse"])
-						onFBLogin();
-				}, {scope: fbPerms});
+      onLogin(response);
+    }, {scope: 'user_friends, email'});
+			
 		//}
 	};
 	
