@@ -1,0 +1,6 @@
+#Daily Log - Kevin Martinez
+5/25:
+	Created GitHub Repository
+	Adding JavaScript For Facebook Plugin
+	Uploaded Template to facebook Page
+	
