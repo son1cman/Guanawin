@@ -1,0 +1,1 @@
+Path: C:\Program Files\Construct 2\exporters\html5\plugins\facebook
