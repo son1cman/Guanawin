@@ -1,6 +1,5 @@
 # Guanawin
 ===============================
-
 This repository contains the plugin code and final distribution of guanawin match game on apps.facebook.com/nsguanawin
 
 Therefore this code is offered with absolutely no support.
