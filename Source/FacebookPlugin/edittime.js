@@ -1,4 +1,7 @@
-﻿function GetPluginSettings()
+﻿/**
+ * Hardmode Interactive
+ */
+function GetPluginSettings()
 {
 	return {
 		"name":			"Facebook",
