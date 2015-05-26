@@ -290,4 +290,159 @@ cr.plugins_.CJSAds = function(runtime) {
             );
     };
 
-   
+    function socialServiceRequestScoreCallback(loadedScore, err) {
+        if (!err) {
+            requested_score = loadedScore.score || 0;
+            self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceRequestScoreSuccess, self);
+        } else {
+            console.log(err);
+            self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceRequestScoreFailed, self);
+        }
+    }; 
+    Acts.prototype.socialServiceRequestScore = function(leaderboard_) {
+        if (!this.socialServiceInterface) return;
+        if (this.socialServiceInterface.isLoggedIn())
+            this.socialServiceInterface.requestScore(
+                socialServiceRequestScoreCallback, {
+                    leaderboardID: leaderboard_
+                });
+    };
+
+    function socialServiceOpenLeaderboardCallback(err) {
+        if (err) {
+            console.log(err);
+        }
+        self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceOpenLeaderBoardClosed, self);
+    }; 
+    Acts.prototype.socialServiceOpenLeaderboard = function(leaderboard_) {
+        if (!this.socialServiceInterface) return;
+        if (!this.socialServiceInterface.isLoggedIn()) return;
+        self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceOpenLeaderBoardSuccess, self);
+        this.socialServiceInterface.showLeaderboard(
+            socialServiceOpenLeaderboardCallback, {
+                leaderboardID: leaderboard_
+            }
+        );
+    };
+
+    function socialServiceOpenAchievementsCallback(err) {
+        if (err) {
+            console.log(err);
+        }
+        self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceOpenAchievementsClosed, self);
+    }
+    Acts.prototype.socialServiceOpenAchievements = function() {
+        if (!this.socialServiceInterface) return;
+        if (!this.socialServiceInterface.isLoggedIn()) return;
+        self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceOpenAchievementsSuccess, self);
+        this.socialServiceInterface.showAchievements(socialServiceOpenAchievementsCallback);
+    };
+
+    function socialServiceResetAchievementsCallback(err) {
+        if (err) {
+            try {
+                console.log(JSON.stringify(err));
+            } catch (e) {
+                for (var prop in err) {
+                    console.log(err[prop]);
+                }
+                console.log(e);
+            }
+            self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceResetAchievementsFailed, self);
+        } else {
+            self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceResetAchievementsCompleted, self);
+        }
+    }
+    Acts.prototype.socialServiceResetAchievements = function() {
+        if (!this.socialServiceInterface) return;
+        if (!this.socialServiceInterface.isLoggedIn()) return;
+        this.socialServiceInterface.resetAchievements(socialServiceResetAchievementsCallback);
+    };
+
+    function socialServiceSubmitAchievementCallback(err) {
+        if (err) {
+            try {
+                console.log(JSON.stringify(err));
+            } catch (e) {
+                for (var prop in err) {
+                    console.log(err[prop]);
+                }
+                console.log(e);
+            }
+            self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceSubmitAchievementFailed, self);
+        } else {
+            self.runtime.trigger(cr.plugins_.CJSAds.prototype.cnds.onSocialServiceSubmitAchievementCompleted, self);
+        }
+    }
+    Acts.prototype.socialServiceSubmitAchievement = function(_achievementId) {
+        if (!this.socialServiceInterface) return;
+        if (!this.socialServiceInterface.isLoggedIn()) return;
+        this.socialServiceInterface.submitAchievement(_achievementId, socialServiceSubmitAchievementCallback);
+    }; pluginProto.acts = new Acts();
+    /**
+     * Expressions
+     */
+    function Exps() {}; Exps.prototype.InputText = function(ret) {
+        ret.set_string(input_text);
+    }; 
+    Exps.prototype.PurchaseTransactionId = function(ret) {
+        ret.set_string(PurchaseTransactionId);
+    }; 
+    Exps.prototype.PurchaseProductId = function(ret) {
+        ret.set_string(PurchaseProductId);
+    }; 
+    Exps.prototype.ProductCount = function(ret) {
+        ret.set_int(products_list.length);
+    }; 
+    Exps.prototype.ProductDescription = function(ret, index) {
+        index = Math.floor(index);
+        if (index < 0 || index >= products_list.length) {
+            ret.set_string("");
+            return;
+        }
+        ret.set_string(products_list[index]["description"]);
+    }; 
+    Exps.prototype.ProductLocalizedPrice = function(ret, index) {
+        index = Math.floor(index);
+        if (index < 0 || index >= products_list.length) {
+            ret.set_string("");
+            return;
+        }
+        ret.set_string(products_list[index]["localizedPrice"]);
+    }; 
+    Exps.prototype.ProductPrice = function(ret, index) {
+        index = Math.floor(index);
+        if (index < 0 || index >= products_list.length) {
+            ret.set_string("");
+            return;
+        }
+        ret.set_string(products_list[index]["price"]);
+    }; 
+    Exps.prototype.ProductAlias = function(ret, index) {
+        index = Math.floor(index);
+        if (index < 0 || index >= products_list.length) {
+            ret.set_string("");
+            return;
+        }
+        ret.set_string(products_list[index]["productAlias"]);
+    }; 
+    Exps.prototype.ProductID = function(ret, index) {
+        index = Math.floor(index);
+        if (index < 0 || index >= products_list.length) {
+            ret.set_string("");
+            return;
+        }
+        ret.set_string(products_list[index]["productId"]);
+    }; 
+    Exps.prototype.ProductTitle = function(ret, index) {
+        index = Math.floor(index);
+        if (index < 0 || index >= products_list.length) {
+            ret.set_string("");
+            return;
+        }
+        ret.set_string(products_list[index]["title"]);
+    }; 
+    Exps.prototype.PlayerScore = function(ret) {
+        ret.set_float(requested_score);
+    }; pluginProto.exps = new Exps();
+}());

@@ -36,6 +36,10 @@ cr.plugins_.Facebook = function(runtime)
 	var fbFullName = "";
 	var fbFirstName = "";
 	var fbLastName = "";
+	var fbUserEmail = "";
+	var fbUserAgeRange = "";
+	var fbUserLocation = "";
+
 	var fbRuntime = null;
 	var fbInst = null;
 	
@@ -59,10 +63,12 @@ cr.plugins_.Facebook = function(runtime)
 			//Construct 2 Api RunTime
 			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnLogIn, fbInst);
 			//Updated 2.3
-			FB.api('/me?fields=first_name', function(response) {
+			
+			FB.api('/me?fields=email,id,first_name,age_range', function(response) {
 							
 							fbFirstName = response["first_name"];
 							fbFullName = fbFirstName;
+							fbUserID = response["id"];
 							//fbLastName = response["last_name"];
 							//Construct 2 ApiRun Time
 							fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnNameAvailable, fbInst);
@@ -114,7 +120,7 @@ cr.plugins_.Facebook = function(runtime)
 			});
 			
 			fbReady = true;
-			
+			//Obsolote FB api
 			FB.Event.subscribe('auth.login', function(response) {
 				fbUserID = response["authResponse"]["userID"];
 				log("User ID = " + fbUserID);
