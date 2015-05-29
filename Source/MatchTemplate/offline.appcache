@@ -1,5 +1,5 @@
 ﻿CACHE MANIFEST
-#1432592209
+#1432893806
 data.js
 c2runtime.js
 jquery-2.1.1.min.js
@@ -24,5 +24,6 @@ icon-114.png
 icon-128.png
 icon-256.png
 loading-logo.png
+channel.html
 NETWORK:
 *

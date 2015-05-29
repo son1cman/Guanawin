@@ -17679,6 +17679,662 @@ cr.plugins_.Audio = function(runtime)
 }());
 ;
 ;
+cr.plugins_.Button = function(runtime)
+{
+	this.runtime = runtime;
+};
+(function ()
+{
+	var pluginProto = cr.plugins_.Button.prototype;
+	pluginProto.Type = function(plugin)
+	{
+		this.plugin = plugin;
+		this.runtime = plugin.runtime;
+	};
+	var typeProto = pluginProto.Type.prototype;
+	typeProto.onCreate = function()
+	{
+	};
+	pluginProto.Instance = function(type)
+	{
+		this.type = type;
+		this.runtime = type.runtime;
+	};
+	var instanceProto = pluginProto.Instance.prototype;
+	instanceProto.onCreate = function()
+	{
+		if (this.runtime.isDomFree)
+		{
+			cr.logexport("[Construct 2] Button plugin not supported on this platform - the object will not be created");
+			return;
+		}
+		this.isCheckbox = (this.properties[0] === 1);
+		this.inputElem = document.createElement("input");
+		if (this.isCheckbox)
+			this.elem = document.createElement("label");
+		else
+			this.elem = this.inputElem;
+		this.labelText = null;
+		this.inputElem.type = (this.isCheckbox ? "checkbox" : "button");
+		this.inputElem.id = this.properties[6];
+		jQuery(this.elem).appendTo(this.runtime.canvasdiv ? this.runtime.canvasdiv : "body");
+		if (this.isCheckbox)
+		{
+			jQuery(this.inputElem).appendTo(this.elem);
+			this.labelText = document.createTextNode(this.properties[1]);
+			jQuery(this.elem).append(this.labelText);
+			this.inputElem.checked = (this.properties[7] !== 0);
+			jQuery(this.elem).css("font-family", "sans-serif");
+			jQuery(this.elem).css("display", "inline-block");
+			jQuery(this.elem).css("color", "black");
+		}
+		else
+			this.inputElem.value = this.properties[1];
+		this.elem.title = this.properties[2];
+		this.inputElem.disabled = (this.properties[4] === 0);
+		this.autoFontSize = (this.properties[5] !== 0);
+		this.element_hidden = false;
+		if (this.properties[3] === 0)
+		{
+			jQuery(this.elem).hide();
+			this.visible = false;
+			this.element_hidden = true;
+		}
+		this.inputElem.onclick = (function (self) {
+			return function(e) {
+				e.stopPropagation();
+				self.runtime.isInUserInputEvent = true;
+				self.runtime.trigger(cr.plugins_.Button.prototype.cnds.OnClicked, self);
+				self.runtime.isInUserInputEvent = false;
+			};
+		})(this);
+		this.elem.addEventListener("touchstart", function (e) {
+			e.stopPropagation();
+		}, false);
+		this.elem.addEventListener("touchmove", function (e) {
+			e.stopPropagation();
+		}, false);
+		this.elem.addEventListener("touchend", function (e) {
+			e.stopPropagation();
+		}, false);
+		jQuery(this.elem).mousedown(function (e) {
+			e.stopPropagation();
+		});
+		jQuery(this.elem).mouseup(function (e) {
+			e.stopPropagation();
+		});
+		jQuery(this.elem).keydown(function (e) {
+			e.stopPropagation();
+		});
+		jQuery(this.elem).keyup(function (e) {
+			e.stopPropagation();
+		});
+		this.lastLeft = 0;
+		this.lastTop = 0;
+		this.lastRight = 0;
+		this.lastBottom = 0;
+		this.lastWinWidth = 0;
+		this.lastWinHeight = 0;
+		this.updatePosition(true);
+		this.runtime.tickMe(this);
+	};
+	instanceProto.saveToJSON = function ()
+	{
+		var o = {
+			"tooltip": this.elem.title,
+			"disabled": !!this.inputElem.disabled
+		};
+		if (this.isCheckbox)
+		{
+			o["checked"] = !!this.inputElem.checked;
+			o["text"] = this.labelText.nodeValue;
+		}
+		else
+		{
+			o["text"] = this.elem.value;
+		}
+		return o;
+	};
+	instanceProto.loadFromJSON = function (o)
+	{
+		this.elem.title = o["tooltip"];
+		this.inputElem.disabled = o["disabled"];
+		if (this.isCheckbox)
+		{
+			this.inputElem.checked = o["checked"];
+			this.labelText.nodeValue = o["text"];
+		}
+		else
+		{
+			this.elem.value = o["text"];
+		}
+	};
+	instanceProto.onDestroy = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		jQuery(this.elem).remove();
+		this.elem = null;
+	};
+	instanceProto.tick = function ()
+	{
+		this.updatePosition();
+	};
+	var last_canvas_offset = null;
+	var last_checked_tick = -1;
+	instanceProto.updatePosition = function (first)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		var left = this.layer.layerToCanvas(this.x, this.y, true);
+		var top = this.layer.layerToCanvas(this.x, this.y, false);
+		var right = this.layer.layerToCanvas(this.x + this.width, this.y + this.height, true);
+		var bottom = this.layer.layerToCanvas(this.x + this.width, this.y + this.height, false);
+		var rightEdge = this.runtime.width / this.runtime.devicePixelRatio;
+		var bottomEdge = this.runtime.height / this.runtime.devicePixelRatio;
+		if (!this.visible || !this.layer.visible || right <= 0 || bottom <= 0 || left >= rightEdge || top >= bottomEdge)
+		{
+			if (!this.element_hidden)
+				jQuery(this.elem).hide();
+			this.element_hidden = true;
+			return;
+		}
+		if (left < 1)
+			left = 1;
+		if (top < 1)
+			top = 1;
+		if (right >= rightEdge)
+			right = rightEdge - 1;
+		if (bottom >= bottomEdge)
+			bottom = bottomEdge - 1;
+		var curWinWidth = window.innerWidth;
+		var curWinHeight = window.innerHeight;
+		if (!first && this.lastLeft === left && this.lastTop === top && this.lastRight === right && this.lastBottom === bottom && this.lastWinWidth === curWinWidth && this.lastWinHeight === curWinHeight)
+		{
+			if (this.element_hidden)
+			{
+				jQuery(this.elem).show();
+				this.element_hidden = false;
+			}
+			return;
+		}
+		this.lastLeft = left;
+		this.lastTop = top;
+		this.lastRight = right;
+		this.lastBottom = bottom;
+		this.lastWinWidth = curWinWidth;
+		this.lastWinHeight = curWinHeight;
+		if (this.element_hidden)
+		{
+			jQuery(this.elem).show();
+			this.element_hidden = false;
+		}
+		var offx = Math.round(left) + jQuery(this.runtime.canvas).offset().left;
+		var offy = Math.round(top) + jQuery(this.runtime.canvas).offset().top;
+		jQuery(this.elem).css("position", "absolute");
+		jQuery(this.elem).offset({left: offx, top: offy});
+		jQuery(this.elem).width(Math.round(right - left));
+		jQuery(this.elem).height(Math.round(bottom - top));
+		if (this.autoFontSize)
+			jQuery(this.elem).css("font-size", ((this.layer.getScale(true) / this.runtime.devicePixelRatio) - 0.2) + "em");
+	};
+	instanceProto.draw = function(ctx)
+	{
+	};
+	instanceProto.drawGL = function(glw)
+	{
+	};
+	function Cnds() {};
+	Cnds.prototype.OnClicked = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.IsChecked = function ()
+	{
+		return this.isCheckbox && this.inputElem.checked;
+	};
+	pluginProto.cnds = new Cnds();
+	function Acts() {};
+	Acts.prototype.SetText = function (text)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		if (this.isCheckbox)
+			this.labelText.nodeValue = text;
+		else
+			this.elem.value = text;
+	};
+	Acts.prototype.SetTooltip = function (text)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.elem.title = text;
+	};
+	Acts.prototype.SetVisible = function (vis)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.visible = (vis !== 0);
+	};
+	Acts.prototype.SetEnabled = function (en)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.inputElem.disabled = (en === 0);
+	};
+	Acts.prototype.SetFocus = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.inputElem.focus();
+	};
+	Acts.prototype.SetBlur = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		this.inputElem.blur();
+	};
+	Acts.prototype.SetCSSStyle = function (p, v)
+	{
+		if (this.runtime.isDomFree)
+			return;
+		jQuery(this.elem).css(p, v);
+	};
+	Acts.prototype.SetChecked = function (c)
+	{
+		if (this.runtime.isDomFree || !this.isCheckbox)
+			return;
+		this.inputElem.checked = (c === 1);
+	};
+	Acts.prototype.ToggleChecked = function ()
+	{
+		if (this.runtime.isDomFree || !this.isCheckbox)
+			return;
+		this.inputElem.checked = !this.inputElem.checked;
+	};
+	pluginProto.acts = new Acts();
+	function Exps() {};
+	pluginProto.exps = new Exps();
+}());
+;
+;
+cr.plugins_.Facebook = function(runtime)
+{
+	this.runtime = runtime;
+};
+(function ()
+{
+	var pluginProto = cr.plugins_.Facebook.prototype;
+	pluginProto.Type = function(plugin)
+	{
+		this.plugin = plugin;
+		this.runtime = plugin.runtime;
+	};
+	var typeProto = pluginProto.Type.prototype;
+	var fbAppID = "";
+	var fbAppSecret = "";
+	var fbReady = false;
+	var fbLoggedIn = false;
+	var fbUserID = "";
+	var fbFullName = "";
+	var fbFirstName = "";
+	var fbLastName = "";
+	var fbRuntime = null;
+	var fbInst = null;
+	var fbScore = 0;
+	var fbHiscoreName = "";
+	var fbHiscoreUserID = 0;
+	var fbRank = 0;
+	var fbCanPublishStream = false;
+	var fbCanPublishAction = false;
+	var fbPerms = "";
+	var triggeredReady = false;
+	function onFBLogin()
+	{
+		if (!fbLoggedIn)
+		{
+			fbLoggedIn = true;
+			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnLogIn, fbInst);
+			FB.api('/me?fields=first_name', function(response) {
+							fbFirstName = response["first_name"];
+							fbFullName = fbFirstName;
+							fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnNameAvailable, fbInst);
+						});
+		}
+	};
+	typeProto.onCreate = function()
+	{
+	};
+	pluginProto.Instance = function(type)
+	{
+		this.type = type;
+		this.runtime = type.runtime;
+	};
+	var instanceProto = pluginProto.Instance.prototype;
+	instanceProto.onCreate = function()
+	{
+		if (this.runtime.isDomFree)
+		{
+			cr.logexport("[Construct 2] Facebook plugin not supported on this platform - the object will not be created");
+			return;
+		}
+		this.runtime.tickMe(this);
+		fbAppID = this.properties[0];
+		fbAppSecret = this.properties[1];
+		fbRuntime = this.runtime;
+		fbInst = this;
+		window.fbAsyncInit = function() {
+			var channelfile = '//' + location.hostname;
+			var pname = location.pathname;
+			if (pname.substr(pname.length - 1) !== '/')
+				pname = pname.substr(0, pname.lastIndexOf('/') + 1);
+			FB.init({
+			  appId      : fbAppID,
+			  xfbml      : true,
+			  version    : 'v2.3'
+			});
+			fbReady = true;
+			FB.Event.subscribe('auth.login', function(response) {
+				fbUserID = response["authResponse"]["userID"];
+;
+				onFBLogin();
+			});
+			FB.Event.subscribe('auth.logout', function(response) {
+				if (fbLoggedIn)
+				{
+					fbLoggedIn = false;
+					fbFullName = "";
+					fbFirstName = "";
+					fbLastName = "";
+					fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnLogOut, fbInst);
+				}
+			});
+			FB.getLoginStatus(function(response) {
+				if (response["authResponse"])
+				{
+					fbUserID = response["authResponse"]["userID"];
+;
+					onFBLogin();
+				}
+			});
+			if (!triggeredReady)
+			{
+				triggeredReady = true;
+				fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnReady, fbInst);
+			}
+		};
+		if (fbAppID.length)
+		{
+			(function(d, s, id){
+			    var js, fjs = d.getElementsByTagName(s)[0];
+			    if (d.getElementById(id)) {return;}
+			    js = d.createElement(s); js.id = id;
+			    js.src = "//connect.facebook.net/en_US/sdk.js";
+			    fjs.parentNode.insertBefore(js, fjs);
+			}(document, 'script', 'facebook-jssdk'));
+		}
+		else
+;
+	};
+	instanceProto.tick = function ()
+	{
+		if (triggeredReady)
+			return;
+		if (fbReady)
+		{
+			triggeredReady = true;
+			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnReady, fbInst);
+		}
+	};
+	instanceProto.onLayoutChange = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		if (fbLoggedIn)
+			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnLogIn, fbInst);
+		if (fbFullName.length)
+			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnNameAvailable, fbInst);
+	};
+	function Cnds() {};
+	Cnds.prototype.IsReady = function ()
+	{
+		return fbReady;
+	};
+	Cnds.prototype.OnReady = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.IsLoggedIn = function ()
+	{
+		return fbLoggedIn;
+	};
+	Cnds.prototype.OnLogIn = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.OnLogOut = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.OnNameAvailable = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.OnUserTopScoreAvailable = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.OnHiscore = function ()
+	{
+		return true;
+	};
+	Cnds.prototype.OnScoreSubmitted = function ()
+	{
+		return true;
+	};
+	pluginProto.cnds = new Cnds();
+	function Acts() {};
+	Acts.prototype.LogIn = function (perm_stream, perm_action)
+	{
+		if (this.runtime.isDomFree || !fbReady)
+			return;
+		fbCanPublishStream = (perm_stream === 1);
+		fbCanPublishAction = (perm_action === 1);
+		var perms = [];
+		if (fbCanPublishStream)
+			perms.push("publish_stream");
+		if (fbCanPublishAction)
+			perms.push("publish_actions");
+		var newperms = perms.join();
+			fbPerms = newperms;
+			FB.login(function(response) {
+      onLogin(response);
+    }, {scope: 'user_friends, email'});
+	};
+	Acts.prototype.LogOut = function ()
+	{
+		if (this.runtime.isDomFree)
+			return;
+		if (fbLoggedIn)
+			FB.logout(function(response) {});
+	};
+	Acts.prototype.PromptWallPost = function ()
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		FB.ui({ "method": "feed" }, function(response) {
+				if (!response || response.error)
+					  console.error(response);
+			});
+	};
+	Acts.prototype.PromptToShareApp = function (name_, caption_, description_, picture_)
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		FB.ui({
+				"method": "feed",
+				"link": "http://apps.facebook.com/" + fbAppID + "/",
+				"picture": picture_,
+				"name": name_,
+				"caption": caption_,
+				"description": description_
+			  }, function(response) {
+				  if (!response || response.error)
+						  console.error(response);
+			});
+	};
+	Acts.prototype.PromptToShareLink = function (url_, name_, caption_, description_, picture_)
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		FB.ui({
+				"method": "feed",
+				"link": url_,
+				"picture": picture_,
+				"name": name_,
+				"caption": caption_,
+				"description": description_
+			  }, function(response) {
+					if (!response || response.error)
+						console.error(response);
+			});
+	};
+	Acts.prototype.PublishToWall = function (message_)
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		var publish = {
+			"method": 'stream.publish',
+			"message": message_
+		};
+		FB.api('/me/feed', 'POST', publish, function(response) {
+				if (!response || response.error)
+					console.error(response);
+			});
+	};
+	Acts.prototype.PublishLink = function (message_, url_, name_, caption_, description_, picture_)
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		var publish = {
+				"method": 'stream.publish',
+				"message": message_,
+				"link": url_,
+				"name": name_,
+				"caption": caption_,
+				"description": description_
+			};
+		if (picture_.length)
+			publish["picture"] = picture_;
+		FB.api('/me/feed', 'POST', publish, function(response) {
+				if (!response || response.error)
+					console.error(response);
+			});
+	};
+	Acts.prototype.PublishScore = function (score_)
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		FB.api('/' + fbUserID + '/scores', 'POST', { "score": Math.floor(score_), "access_token": fbAppID + "|" + fbAppSecret }, function(response) {
+			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnScoreSubmitted, fbInst);
+			if (!response || response.error)
+				console.error(response);
+	   });
+	};
+	Acts.prototype.RequestUserHiscore = function ()
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		FB.api('/me/scores', 'GET', {}, function(response) {
+			fbScore = 0;
+			var arr = response["data"];
+			if (!arr)
+			{
+				console.error("Request for user hi-score failed: " + response);
+				return;
+			}
+			var i, len;
+			for (i = 0, len = arr.length; i < len; i++)
+			{
+				if (arr[i]["score"] > fbScore)
+					fbScore = arr[i]["score"];
+			}
+			fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnUserTopScoreAvailable, fbInst);
+			if (!response || response.error) {
+			  console.error(response);
+		    } else {
+;
+		    }
+		});
+	};
+	Acts.prototype.RequestHiscores = function (n)
+	{
+		if (this.runtime.isDomFree || !fbLoggedIn)
+			return;
+		FB.api('/' + fbAppID + '/scores', 'GET', {}, function(response) {
+			var arr = response["data"];
+			if (!arr)
+			{
+				console.error("Hi-scores request failed: " + response);
+				return;
+			}
+			arr.sort(function(a, b) {
+				return b["score"] - a["score"];
+			});
+			var i = 0, len = Math.min(arr.length, n);
+			for ( ; i < len; i++)
+			{
+				fbScore = arr[i]["score"];
+				fbHiscoreName = arr[i]["user"]["name"];
+				fbHiscoreUserID = arr[i]["user"]["id"];
+				fbRank = i + 1;
+				fbRuntime.trigger(cr.plugins_.Facebook.prototype.cnds.OnHiscore, fbInst);
+			}
+			if (!response || response.error) {
+			  console.error(response);
+		    } else {
+;
+		    }
+		});
+	};
+	pluginProto.acts = new Acts();
+	function Exps() {};
+	Exps.prototype.FullName = function (ret)
+	{
+		ret.set_string(fbFullName);
+	};
+	Exps.prototype.FirstName = function (ret)
+	{
+		ret.set_string(fbFirstName);
+	};
+	Exps.prototype.LastName = function (ret)
+	{
+		ret.set_string(fbLastName);
+	};
+	Exps.prototype.Score = function (ret)
+	{
+		ret.set_int(fbScore);
+	};
+	Exps.prototype.HiscoreName = function (ret)
+	{
+		ret.set_string(fbHiscoreName);
+	};
+	Exps.prototype.HiscoreUserID = function (ret)
+	{
+		ret.set_int(fbHiscoreUserID);
+	};
+	Exps.prototype.HiscoreRank = function (ret)
+	{
+		ret.set_int(fbRank);
+	};
+	Exps.prototype.UserID = function (ret)
+	{
+		ret.set_float(parseFloat(fbUserID));
+	};
+	pluginProto.exps = new Exps();
+}());
+;
+;
 cr.plugins_.Function = function(runtime)
 {
 	this.runtime = runtime;
@@ -23055,11 +23711,13 @@ cr.behaviors.solid = function(runtime)
 cr.getObjectRefTable = function () { return [
 	cr.plugins_.Arr,
 	cr.plugins_.Audio,
+	cr.plugins_.Button,
 	cr.plugins_.Function,
-	cr.plugins_.Mouse,
+	cr.plugins_.Facebook,
 	cr.plugins_.Keyboard,
-	cr.plugins_.Sprite,
+	cr.plugins_.Mouse,
 	cr.plugins_.Text,
+	cr.plugins_.Sprite,
 	cr.plugins_.TiledBg,
 	cr.plugins_.Touch,
 	cr.behaviors.solid,
@@ -23131,5 +23789,7 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.Arr.prototype.exps.CurX,
 	cr.plugins_.Arr.prototype.exps.At,
 	cr.plugins_.Arr.prototype.exps.CurY,
-	cr.plugins_.Arr.prototype.cnds.CompareXY
+	cr.plugins_.Arr.prototype.cnds.CompareXY,
+	cr.plugins_.Button.prototype.cnds.OnClicked,
+	cr.plugins_.Facebook.prototype.acts.LogIn
 ];};
