@@ -58,6 +58,20 @@ cr.plugins_.DialogBox = function(runtime)
 	//ACTION AddAlert
 	acts.AddAlert = function (msgAlert)
 	{
+		
+		var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                //document.getElementById("txtHint").innerHTML = xmlhttp.responseText;
+                msgAlert = xmlhttp.responseText;
+            }
+        }
+        xmlhttp.open("GET", "https://www.guanawin.com/game/bestUserScore.php?name=" + "kevin", true);
+        xmlhttp.send();
+
+
+
+
 		alert(msgAlert.toString());
 	};
 	
